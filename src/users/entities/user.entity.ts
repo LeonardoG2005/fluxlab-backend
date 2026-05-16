@@ -15,7 +15,6 @@ export class User {
   @Column({ name: 'email', type: 'varchar', length: 180, unique: true })
   email: string;
 
-
   @Column({ name: 'role', type: 'varchar', length: 50 })
   role: string;
 
@@ -25,7 +24,11 @@ export class User {
   @Column({ name: 'password_changed', type: 'boolean', default: false })
   passwordChanged: boolean;
 
-  @Column({ name: 'created_at', type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
+  @Column({
+    name: 'created_at',
+    type: 'timestamptz',
+    default: () => 'CURRENT_TIMESTAMP',
+  })
   createdAt: Date;
 
   @OneToMany(() => ProjectUser, (projectUser) => projectUser.user)

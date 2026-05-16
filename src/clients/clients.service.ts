@@ -48,13 +48,16 @@ export class ClientsService {
 
     return this.clientsRepository.save(client);
   }
-  
+
   async findAll(filters?: ClientListFilters) {
     const normalizedName = filters?.name?.trim();
     const normalizedStatus = filters?.status?.trim();
 
     const hasCombinedFilters = Boolean(
-      normalizedName || normalizedStatus || filters?.fromDate || filters?.toDate,
+      normalizedName ||
+      normalizedStatus ||
+      filters?.fromDate ||
+      filters?.toDate,
     );
 
     if (!hasCombinedFilters) {
@@ -64,7 +67,9 @@ export class ClientsService {
       });
 
       return {
-        message: clients.length ? 'Clients retrieved successfully' : 'No clients found',
+        message: clients.length
+          ? 'Clients retrieved successfully'
+          : 'No clients found',
         data: clients,
       };
     }
@@ -108,14 +113,18 @@ export class ClientsService {
     const clients = await query.getMany();
 
     return {
-      message: clients.length ? 'Clients retrieved successfully' : 'No clients found',
+      message: clients.length
+        ? 'Clients retrieved successfully'
+        : 'No clients found',
       data: clients,
     };
   }
 
   async filterClientsByDateRange(fromDate?: string, toDate?: string) {
     if (!fromDate && !toDate) {
-      throw new BadRequestException('At least one of fromDate or toDate must be provided');
+      throw new BadRequestException(
+        'At least one of fromDate or toDate must be provided',
+      );
     }
 
     return this.findAll({ fromDate, toDate });
@@ -158,7 +167,10 @@ export class ClientsService {
 
     const mergedClient = this.clientsRepository.merge(client, {
       ...updateClientDto,
-      phoneNumber: Object.prototype.hasOwnProperty.call(updateClientDto, 'phoneNumber')
+      phoneNumber: Object.prototype.hasOwnProperty.call(
+        updateClientDto,
+        'phoneNumber',
+      )
         ? this.normalizePhoneNumber(updateClientDto.phoneNumber)
         : client.phoneNumber,
       address: updateClientDto.address ?? client.address,
@@ -174,7 +186,10 @@ export class ClientsService {
 
     const client = await this.findClientByIdOrFail(id);
 
-    await this.projectsRepository.update({ client: { id: client.id } }, { client: null });
+    await this.projectsRepository.update(
+      { client: { id: client.id } },
+      { client: null },
+    );
     await this.clientsRepository.remove(client);
 
     return { message: 'Client deleted successfully' };
@@ -194,7 +209,9 @@ export class ClientsService {
     });
 
     return {
-      message: clients.length ? 'Clients found' : 'No clients found matching the provided name',
+      message: clients.length
+        ? 'Clients found'
+        : 'No clients found matching the provided name',
       data: clients,
     };
   }
@@ -209,7 +226,7 @@ export class ClientsService {
       .leftJoinAndSelect('project.reports', 'reports')
       .where('client.id = :clientId', { clientId })
       .orderBy('project.created_at', 'DESC');
-    
+
     if (projectStatus?.trim()) {
       projectsQuery.andWhere('LOWER(project.status) = LOWER(:status)', {
         status: projectStatus.trim(),
@@ -226,7 +243,9 @@ export class ClientsService {
   }
 
   private async findClientByIdOrFail(clientId: string): Promise<Client> {
-    const client = await this.clientsRepository.findOne({ where: { id: clientId } });
+    const client = await this.clientsRepository.findOne({
+      where: { id: clientId },
+    });
 
     if (!client) {
       throw new NotFoundException('Client not found');
@@ -248,7 +267,10 @@ export class ClientsService {
     return trimmedPhoneNumber.length ? trimmedPhoneNumber : null;
   }
 
-  private async ensureClientNameIsUnique(name: string, currentClientId?: string): Promise<void> {
+  private async ensureClientNameIsUnique(
+    name: string,
+    currentClientId?: string,
+  ): Promise<void> {
     const nameLower = this.normalizeNameLower(name);
 
     const query = this.clientsRepository
@@ -265,7 +287,10 @@ export class ClientsService {
     }
   }
 
-  private normalizeDateRange(fromDate?: string, toDate?: string): {
+  private normalizeDateRange(
+    fromDate?: string,
+    toDate?: string,
+  ): {
     normalizedFromDate: string | null;
     normalizedToDate: string | null;
   } {

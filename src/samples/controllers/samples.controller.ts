@@ -51,7 +51,9 @@ export class SamplesController {
   }
 
   @Post('bulk-with-values')
-  @ApiOperation({ summary: 'Create many samples with values in one transaction' })
+  @ApiOperation({
+    summary: 'Create many samples with values in one transaction',
+  })
   @ApiCreatedResponse({ type: Sample, isArray: true })
   createManyWithValues(
     @Body() createSamplesWithValuesDto: CreateSamplesWithValuesDto,

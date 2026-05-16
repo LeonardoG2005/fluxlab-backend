@@ -72,7 +72,11 @@ describe('ClientsController', () => {
 
   describe('filterByClient', () => {
     it('should call service.filterByClient with clientId and projectStatus', async () => {
-      const expected = { client: { id: 'client-1' }, totalProjects: 1, projects: [] };
+      const expected = {
+        client: { id: 'client-1' },
+        totalProjects: 1,
+        projects: [],
+      };
       service.filterByClient.mockResolvedValue(expected);
 
       const result = await controller.filterByClient('client-1', 'completed');
@@ -93,7 +97,10 @@ describe('ClientsController', () => {
 
       await controller.filterByClient('client-1');
 
-      expect(service.filterByClient).toHaveBeenCalledWith('client-1', undefined);
+      expect(service.filterByClient).toHaveBeenCalledWith(
+        'client-1',
+        undefined,
+      );
     });
   });
 
@@ -136,7 +143,9 @@ describe('ClientsController', () => {
 
   describe('remove', () => {
     it('should pass true to service.remove when confirm is "true"', async () => {
-      service.remove.mockResolvedValue({ message: 'Client deleted successfully' });
+      service.remove.mockResolvedValue({
+        message: 'Client deleted successfully',
+      });
 
       const result = await controller.remove('client-1', 'true');
 
@@ -145,7 +154,9 @@ describe('ClientsController', () => {
     });
 
     it('should pass false to service.remove when confirm is missing', async () => {
-      service.remove.mockResolvedValue({ message: 'Client deleted successfully' });
+      service.remove.mockResolvedValue({
+        message: 'Client deleted successfully',
+      });
 
       await controller.remove('client-1');
 
@@ -153,7 +164,9 @@ describe('ClientsController', () => {
     });
 
     it('should pass false to service.remove when confirm is not "true"', async () => {
-      service.remove.mockResolvedValue({ message: 'Client deleted successfully' });
+      service.remove.mockResolvedValue({
+        message: 'Client deleted successfully',
+      });
 
       await controller.remove('client-1', 'false');
 

@@ -113,7 +113,9 @@ describe('UsersController', () => {
     it('should use req.user.sub when present', async () => {
       service.findOne.mockResolvedValue({ id: 'auth-sub-id' });
 
-      const result = await controller.getCurrentUser({ user: { sub: 'auth-sub-id' } });
+      const result = await controller.getCurrentUser({
+        user: { sub: 'auth-sub-id' },
+      });
 
       expect(service.findOne).toHaveBeenCalledWith('auth-sub-id');
       expect(result).toEqual({ id: 'auth-sub-id' });
@@ -165,7 +167,10 @@ describe('UsersController', () => {
     it('should call service.updateAuthPassword with id and password', async () => {
       service.updateAuthPassword.mockResolvedValue(undefined);
 
-      const result = await controller.updatePassword('user-1', 'new-password-123');
+      const result = await controller.updatePassword(
+        'user-1',
+        'new-password-123',
+      );
 
       expect(service.updateAuthPassword).toHaveBeenCalledWith(
         'user-1',
@@ -185,7 +190,10 @@ describe('UsersController', () => {
         'new-password-123',
       );
 
-      expect(service.changePassword).toHaveBeenCalledWith('user-1', 'new-password-123');
+      expect(service.changePassword).toHaveBeenCalledWith(
+        'user-1',
+        'new-password-123',
+      );
       expect(result).toEqual(expected);
     });
   });

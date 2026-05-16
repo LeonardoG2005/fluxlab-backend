@@ -12,7 +12,6 @@ import {
   CreateTemplateWithFieldsDto,
   CreateTemplateWithFieldsItemDto,
 } from '../dto/create-template-with-fields.dto';
-import { UpdateTemplateDto } from '../dto/update-template.dto';
 import { UpdateTemplateWithFieldsDto } from '../dto/update-template-with-fields.dto';
 import { Field } from '../entities/field.entity';
 import { Sample } from '../entities/sample.entity';
@@ -82,9 +81,9 @@ export class TemplatesService {
   async findAll(): Promise<Template[]> {
     return this.templateRepository.find({
       relations: { fields: true },
-      order: { 
+      order: {
         createdAt: 'DESC',
-        fields: { orderIndex: 'ASC' }
+        fields: { orderIndex: 'ASC' },
       },
     });
   }
@@ -185,14 +184,17 @@ export class TemplatesService {
     if (!template) {
       throw new NotFoundException(`Template with id ${id} was not found.`);
     }
-    const sampleRepository = this.templateRepository.manager.getRepository(Sample);
+    const sampleRepository =
+      this.templateRepository.manager.getRepository(Sample);
     const associatedSamplesCount = await sampleRepository.count({
       where: { template: { id } },
     });
 
     if (associatedSamplesCount > 0) {
       const samplesLabel =
-        associatedSamplesCount === 1 ? 'muestra asociada' : 'muestras asociadas';
+        associatedSamplesCount === 1
+          ? 'muestra asociada'
+          : 'muestras asociadas';
 
       throw new ConflictException(
         `No se puede eliminar la plantilla porque tiene ${associatedSamplesCount} ${samplesLabel}. Elimina esas muestras primero.`,
@@ -215,7 +217,9 @@ export class TemplatesService {
     name: string,
     templateRepository?: Repository<Template>,
   ): Promise<void> {
-    const existingTemplate = await (templateRepository ?? this.templateRepository).findOne({
+    const existingTemplate = await (
+      templateRepository ?? this.templateRepository
+    ).findOne({
       where: { name },
       select: { id: true },
     });
@@ -229,7 +233,9 @@ export class TemplatesService {
     fields: CreateTemplateWithFieldsItemDto[],
   ): CreateTemplateWithFieldsItemDto[] {
     if (!fields || fields.length === 0) {
-      throw new BadRequestException('fields must be provided and cannot be empty.');
+      throw new BadRequestException(
+        'fields must be provided and cannot be empty.',
+      );
     }
 
     const normalizedNameMap = new Map<string, number>();
@@ -252,7 +258,11 @@ export class TemplatesService {
       orderIndexMap.set(field.orderIndex, index);
 
       const normalizedDataType = field.dataType.trim().toLowerCase();
-      if (!FIELD_DATA_TYPES.includes(normalizedDataType as (typeof FIELD_DATA_TYPES)[number])) {
+      if (
+        !FIELD_DATA_TYPES.includes(
+          normalizedDataType as (typeof FIELD_DATA_TYPES)[number],
+        )
+      ) {
         throw new BadRequestException(
           `Unsupported dataType ${field.dataType}. Allowed values are: ${FIELD_DATA_TYPES.join(', ')}.`,
         );

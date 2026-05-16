@@ -114,9 +114,13 @@ describe('SamplesController', () => {
       const expected = { id: 'sample-1', code: 'SMP-2026-0001' };
       service.findOne.mockResolvedValue(expected);
 
-      const result = await controller.findOne('0f5f6191-2d1a-4280-af65-aa6d83ce3084');
+      const result = await controller.findOne(
+        '0f5f6191-2d1a-4280-af65-aa6d83ce3084',
+      );
 
-      expect(service.findOne).toHaveBeenCalledWith('0f5f6191-2d1a-4280-af65-aa6d83ce3084');
+      expect(service.findOne).toHaveBeenCalledWith(
+        '0f5f6191-2d1a-4280-af65-aa6d83ce3084',
+      );
       expect(result).toEqual(expected);
     });
   });
@@ -147,9 +151,13 @@ describe('SamplesController', () => {
     it('should call service.remove with id', async () => {
       service.remove.mockResolvedValue(undefined);
 
-      const result = await controller.remove('0f5f6191-2d1a-4280-af65-aa6d83ce3084');
+      const result = await controller.remove(
+        '0f5f6191-2d1a-4280-af65-aa6d83ce3084',
+      );
 
-      expect(service.remove).toHaveBeenCalledWith('0f5f6191-2d1a-4280-af65-aa6d83ce3084');
+      expect(service.remove).toHaveBeenCalledWith(
+        '0f5f6191-2d1a-4280-af65-aa6d83ce3084',
+      );
       expect(result).toBeUndefined();
     });
   });

@@ -117,7 +117,10 @@ describe('SamplesService', () => {
       };
       const uniqueQueryBuilder = createQueryBuilderMock();
 
-      templateRepository.findOne.mockResolvedValue({ id: 'template-1', fields: [] });
+      templateRepository.findOne.mockResolvedValue({
+        id: 'template-1',
+        fields: [],
+      });
       projectRepository.findOne.mockResolvedValue({ id: 'project-1' });
       sampleRepository.createQueryBuilder.mockReturnValue(uniqueQueryBuilder);
       uniqueQueryBuilder.getOne.mockResolvedValue({ id: 'existing-sample' });
@@ -149,8 +152,13 @@ describe('SamplesService', () => {
 
       expect(sampleRepository.find).toHaveBeenCalledWith({
         relations: {
-          template: true,
+          template: {
+            fields: true,
+          },
           project: true,
+          sampleFieldValues: {
+            field: true,
+          },
         },
         order: {
           createdAt: 'DESC',
@@ -291,7 +299,10 @@ describe('SamplesService', () => {
       };
       const txTemplateRepository = { findOne: jest.fn() };
       const txProjectRepository = { findOne: jest.fn() };
-      const txSampleFieldValueRepository = { create: jest.fn(), save: jest.fn() };
+      const txSampleFieldValueRepository = {
+        create: jest.fn(),
+        save: jest.fn(),
+      };
 
       const uniqueQueryBuilder = createQueryBuilderMock();
       txSampleRepository.createQueryBuilder.mockReturnValue(uniqueQueryBuilder);
@@ -336,7 +347,10 @@ describe('SamplesService', () => {
 
       const findOneQueryBuilder = createQueryBuilderMock();
       sampleRepository.createQueryBuilder.mockReturnValue(findOneQueryBuilder);
-      findOneQueryBuilder.getOne.mockResolvedValue({ id: 'sample-1', code: dto.code });
+      findOneQueryBuilder.getOne.mockResolvedValue({
+        id: 'sample-1',
+        code: dto.code,
+      });
 
       const result = await service.createWithValues(dto);
 
@@ -360,12 +374,18 @@ describe('SamplesService', () => {
       };
       const txTemplateRepository = { findOne: jest.fn() };
       const txProjectRepository = { findOne: jest.fn() };
-      const txSampleFieldValueRepository = { create: jest.fn(), save: jest.fn() };
+      const txSampleFieldValueRepository = {
+        create: jest.fn(),
+        save: jest.fn(),
+      };
       const uniqueQueryBuilder = createQueryBuilderMock();
 
       txSampleRepository.createQueryBuilder.mockReturnValue(uniqueQueryBuilder);
       uniqueQueryBuilder.getOne.mockResolvedValue(null);
-      txTemplateRepository.findOne.mockResolvedValue({ id: 'template-1', fields: [] });
+      txTemplateRepository.findOne.mockResolvedValue({
+        id: 'template-1',
+        fields: [],
+      });
       txProjectRepository.findOne.mockResolvedValue({ id: 'project-1' });
       txSampleRepository.create.mockReturnValue({ id: 'sample-1' });
       txSampleRepository.save.mockResolvedValue({ id: 'sample-1' });
@@ -391,7 +411,9 @@ describe('SamplesService', () => {
         }),
       );
 
-      await expect(service.createWithValues(dto)).rejects.toThrow(BadRequestException);
+      await expect(service.createWithValues(dto)).rejects.toThrow(
+        BadRequestException,
+      );
       expect(txSampleFieldValueRepository.save).not.toHaveBeenCalled();
     });
   });
@@ -415,7 +437,9 @@ describe('SamplesService', () => {
       sampleRepository.createQueryBuilder.mockReturnValue(queryBuilder);
       queryBuilder.getOne.mockResolvedValue(null);
 
-      await expect(service.findOne('missing-id')).rejects.toThrow(NotFoundException);
+      await expect(service.findOne('missing-id')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
@@ -484,7 +508,9 @@ describe('SamplesService', () => {
     it('should throw NotFoundException when sample to remove does not exist', async () => {
       sampleRepository.findOne.mockResolvedValue(null);
 
-      await expect(service.remove('missing-id')).rejects.toThrow(NotFoundException);
+      await expect(service.remove('missing-id')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 });

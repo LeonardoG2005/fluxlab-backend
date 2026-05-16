@@ -1,4 +1,3 @@
-
 import {
   CanActivate,
   ExecutionContext,
@@ -6,8 +5,10 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { ConfigService } from '@nestjs/config';
+import { Reflector } from '@nestjs/core';
 import type { JWTVerifyGetKey } from 'jose';
 import { Env } from 'src/env.model';
+import { IS_PUBLIC_KEY } from '../decorators/public.decorator';
 import { SupabaseUser } from '../types/supabase-user.interface';
 
 @Injectable()
@@ -16,7 +17,10 @@ export class SupabaseAuthGuard implements CanActivate {
   private issuer: string;
   private joseModulePromise: Promise<typeof import('jose')> | null = null;
 
-  constructor(private configService: ConfigService<Env>) {
+  constructor(
+    private readonly configService: ConfigService<Env>,
+    private readonly reflector: Reflector,
+  ) {
     const projectId = this.configService.get('SUPABASE_PROJECT_ID', {
       infer: true,
     });
@@ -48,11 +52,22 @@ export class SupabaseAuthGuard implements CanActivate {
   }
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
+    const isPublic = this.reflector.getAllAndOverride<boolean>(IS_PUBLIC_KEY, [
+      context.getHandler(),
+      context.getClass(),
+    ]);
+
+    if (isPublic) {
+      return true;
+    }
+
     const request = context.switchToHttp().getRequest();
     const authHeader = request.headers['authorization'];
 
     if (!authHeader || !authHeader.startsWith('Bearer ')) {
-      throw new UnauthorizedException('Missing or invalid Authorization header');
+      throw new UnauthorizedException(
+        'Missing or invalid Authorization header',
+      );
     }
 
     const token = authHeader.split(' ')[1];
@@ -66,7 +81,7 @@ export class SupabaseAuthGuard implements CanActivate {
         audience: 'authenticated',
       });
 
-      request.user = payload as SupabaseUser; 
+      request.user = payload as SupabaseUser;
       return true;
     } catch (err) {
       console.error(err);

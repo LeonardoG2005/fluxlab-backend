@@ -126,9 +126,11 @@ export class FieldsService {
         const nextDataType = updateFieldDto.dataType.trim().toLowerCase();
 
         if (nextDataType !== currentDataType) {
-          const fieldValueCount = await managedSampleFieldValueRepository.count({
-            where: { field: { id: field.id } },
-          });
+          const fieldValueCount = await managedSampleFieldValueRepository.count(
+            {
+              where: { field: { id: field.id } },
+            },
+          );
 
           if (fieldValueCount > 0) {
             throw new BadRequestException(

@@ -33,13 +33,20 @@ export class ProjectsService {
       ? await this.findClientByIdOrFail(createProjectDto.clientId)
       : null;
 
-    await this.ensureProjectNameIsUnique(createProjectDto.name, client?.id ?? null);
+    await this.ensureProjectNameIsUnique(
+      createProjectDto.name,
+      client?.id ?? null,
+    );
 
     const project = this.projectsRepository.create({
       name: createProjectDto.name,
       description: createProjectDto.description ?? null,
-      startDate: createProjectDto.startDate ? new Date(createProjectDto.startDate) : null,
-      endDate: createProjectDto.endDate ? new Date(createProjectDto.endDate) : null,
+      startDate: createProjectDto.startDate
+        ? new Date(createProjectDto.startDate)
+        : null,
+      endDate: createProjectDto.endDate
+        ? new Date(createProjectDto.endDate)
+        : null,
       status: createProjectDto.status ?? 'active',
       client,
     });
@@ -54,10 +61,10 @@ export class ProjectsService {
 
     const hasCombinedFilters = Boolean(
       normalizedName ||
-        normalizedStatus ||
-        normalizedClientId ||
-        filters?.fromDate ||
-        filters?.toDate,
+      normalizedStatus ||
+      normalizedClientId ||
+      filters?.fromDate ||
+      filters?.toDate,
     );
 
     if (!hasCombinedFilters) {
@@ -71,7 +78,9 @@ export class ProjectsService {
       });
 
       return {
-        message: projects.length ? 'Projects retrieved successfully' : 'No projects found',
+        message: projects.length
+          ? 'Projects retrieved successfully'
+          : 'No projects found',
         data: projects,
       };
     }
@@ -94,7 +103,9 @@ export class ProjectsService {
       .orderBy('project.created_at', 'DESC');
 
     if (normalizedName) {
-      query.andWhere('project.name ILIKE :name', { name: `%${normalizedName}%` });
+      query.andWhere('project.name ILIKE :name', {
+        name: `%${normalizedName}%`,
+      });
     }
 
     if (normalizedStatus) {
@@ -122,7 +133,9 @@ export class ProjectsService {
     const projects = await query.getMany();
 
     return {
-      message: projects.length ? 'Projects retrieved successfully' : 'No projects found',
+      message: projects.length
+        ? 'Projects retrieved successfully'
+        : 'No projects found',
       data: projects,
     };
   }
@@ -142,14 +155,20 @@ export class ProjectsService {
     }
 
     const nextName = updateProjectDto.name?.trim() || project.name;
-    await this.ensureProjectNameIsUnique(nextName, client?.id ?? null, project.id);
+    await this.ensureProjectNameIsUnique(
+      nextName,
+      client?.id ?? null,
+      project.id,
+    );
 
     const merged = this.projectsRepository.merge(project, {
       ...updateProjectDto,
       startDate: updateProjectDto.startDate
         ? new Date(updateProjectDto.startDate)
         : project.startDate,
-      endDate: updateProjectDto.endDate ? new Date(updateProjectDto.endDate) : project.endDate,
+      endDate: updateProjectDto.endDate
+        ? new Date(updateProjectDto.endDate)
+        : project.endDate,
       client,
     });
 
@@ -187,7 +206,9 @@ export class ProjectsService {
       .getMany();
 
     return {
-      message: projects.length ? 'Projects retrieved successfully' : 'No projects found',
+      message: projects.length
+        ? 'Projects retrieved successfully'
+        : 'No projects found',
       data: projects,
     };
   }
@@ -223,7 +244,9 @@ export class ProjectsService {
     });
 
     return {
-      message: projects.length ? 'Projects found' : 'No projects found matching the provided name',
+      message: projects.length
+        ? 'Projects found'
+        : 'No projects found matching the provided name',
       data: projects,
     };
   }
@@ -242,7 +265,9 @@ export class ProjectsService {
       .leftJoinAndSelect('project.client', 'client')
       .leftJoinAndSelect('project.samples', 'samples')
       .leftJoinAndSelect('project.reports', 'reports')
-      .where('LOWER(project.status) = LOWER(:status)', { status: status.trim() })
+      .where('LOWER(project.status) = LOWER(:status)', {
+        status: status.trim(),
+      })
       .orderBy('project.created_at', 'DESC');
 
     if (clientId) {
@@ -252,7 +277,9 @@ export class ProjectsService {
     const projects = await query.getMany();
 
     return {
-      message: projects.length ? 'Projects retrieved successfully' : 'No projects found',
+      message: projects.length
+        ? 'Projects retrieved successfully'
+        : 'No projects found',
       data: projects,
     };
   }
@@ -263,7 +290,9 @@ export class ProjectsService {
     clientId?: string,
   ) {
     if (!fromDate && !toDate) {
-      throw new BadRequestException('At least one of fromDate or toDate must be provided');
+      throw new BadRequestException(
+        'At least one of fromDate or toDate must be provided',
+      );
     }
 
     return this.findAll({ fromDate, toDate, clientId });
@@ -327,9 +356,13 @@ export class ProjectsService {
       throw new NotFoundException('One or more projects were not found');
     }
 
-    const alreadyAssociated = projects.filter((project) => project.client?.id === clientId);
+    const alreadyAssociated = projects.filter(
+      (project) => project.client?.id === clientId,
+    );
     if (alreadyAssociated.length === projects.length) {
-      throw new ConflictException('All projects are already associated with the selected client');
+      throw new ConflictException(
+        'All projects are already associated with the selected client',
+      );
     }
 
     projects.forEach((project) => {
@@ -374,7 +407,9 @@ export class ProjectsService {
   }
 
   private async findClientByIdOrFail(clientId: string): Promise<Client> {
-    const client = await this.clientsRepository.findOne({ where: { id: clientId } });
+    const client = await this.clientsRepository.findOne({
+      where: { id: clientId },
+    });
 
     if (!client) {
       throw new NotFoundException('Client not found');
@@ -393,7 +428,10 @@ export class ProjectsService {
     }
   }
 
-  private normalizeDateRange(fromDate?: string, toDate?: string): {
+  private normalizeDateRange(
+    fromDate?: string,
+    toDate?: string,
+  ): {
     normalizedFromDate: string | null;
     normalizedToDate: string | null;
   } {
@@ -447,7 +485,9 @@ export class ProjectsService {
 
     const duplicate = await query.getOne();
     if (duplicate) {
-      throw new ConflictException('A project with this name already exists for the selected client');
+      throw new ConflictException(
+        'A project with this name already exists for the selected client',
+      );
     }
   }
 }

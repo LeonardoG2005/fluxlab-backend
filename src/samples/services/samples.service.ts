@@ -77,7 +77,7 @@ export class SamplesService {
   //   });
   // }
 
-    async findAll(): Promise<Sample[]> {
+  async findAll(): Promise<Sample[]> {
     return this.sampleRepository.find({
       relations: {
         template: {
@@ -230,7 +230,8 @@ export class SamplesService {
           const sampleRepository = manager.getRepository(Sample);
           const templateRepository = manager.getRepository(Template);
           const projectRepository = manager.getRepository(Project);
-          const sampleFieldValueRepository = manager.getRepository(SampleFieldValue);
+          const sampleFieldValueRepository =
+            manager.getRepository(SampleFieldValue);
 
           return this.createWithValuesInTransaction(
             createSampleWithValuesDto,
@@ -260,18 +261,24 @@ export class SamplesService {
   async createManyWithValues(
     createSamplesWithValuesDto: CreateSamplesWithValuesDto,
   ): Promise<Sample[]> {
-    this.ensureNoDuplicatedCodesInBulkRequest(createSamplesWithValuesDto.samples);
+    this.ensureNoDuplicatedCodesInBulkRequest(
+      createSamplesWithValuesDto.samples,
+    );
 
     const sampleIds = await this.sampleRepository.manager.transaction(
       async (manager) => {
         const sampleRepository = manager.getRepository(Sample);
         const templateRepository = manager.getRepository(Template);
         const projectRepository = manager.getRepository(Project);
-        const sampleFieldValueRepository = manager.getRepository(SampleFieldValue);
+        const sampleFieldValueRepository =
+          manager.getRepository(SampleFieldValue);
 
         const createdSampleIds: string[] = [];
 
-        for (const [index, sampleDto] of createSamplesWithValuesDto.samples.entries()) {
+        for (const [
+          index,
+          sampleDto,
+        ] of createSamplesWithValuesDto.samples.entries()) {
           try {
             const sampleId = await this.createWithValuesInTransaction(
               sampleDto,
@@ -354,7 +361,6 @@ export class SamplesService {
     return this.findOne(sample.id);
   }
 
-
   async updateWithValues(
     id: string,
     updateSampleWithValuesDto: UpdateSampleWithValuesDto,
@@ -370,7 +376,8 @@ export class SamplesService {
 
     await this.sampleRepository.manager.transaction(async (manager) => {
       const sampleRepository = manager.getRepository(Sample);
-      const sampleFieldValueRepository = manager.getRepository(SampleFieldValue);
+      const sampleFieldValueRepository =
+        manager.getRepository(SampleFieldValue);
 
       if (updateSampleWithValuesDto.status) {
         sample.status = updateSampleWithValuesDto.status;
@@ -438,9 +445,11 @@ export class SamplesService {
     projectId: string,
     projectRepository?: Repository<Project>,
   ): Promise<Project> {
-    const project = await (projectRepository ?? this.projectRepository).findOne({
-      where: { id: projectId },
-    });
+    const project = await (projectRepository ?? this.projectRepository).findOne(
+      {
+        where: { id: projectId },
+      },
+    );
 
     if (!project) {
       throw new NotFoundException(
@@ -558,11 +567,16 @@ export class SamplesService {
       .getOne();
 
     if (existingSample) {
-      throw new ConflictException(this.buildCodeAlreadyExistsMessage(code, projectId));
+      throw new ConflictException(
+        this.buildCodeAlreadyExistsMessage(code, projectId),
+      );
     }
   }
 
-  private buildCodeAlreadyExistsMessage(code: string, projectId: string): string {
+  private buildCodeAlreadyExistsMessage(
+    code: string,
+    projectId: string,
+  ): string {
     return `Sample code ${code} already exists in project ${projectId}.`;
   }
 
@@ -638,7 +652,10 @@ export class SamplesService {
       const valueType = this.getProvidedValueType(valueItem);
       this.ensureValueMatchesFieldDataType(field.dataType, valueType);
 
-      const mappedValues = this.mapSampleFieldValueColumns(valueItem, valueType);
+      const mappedValues = this.mapSampleFieldValueColumns(
+        valueItem,
+        valueType,
+      );
       const sampleFieldValue = sampleFieldValueRepository.create({
         sample,
         field,
@@ -649,11 +666,16 @@ export class SamplesService {
     }
   }
 
-  private getDuplicateFieldIds(values: CreateSampleWithValuesItemDto[]): string[] {
+  private getDuplicateFieldIds(
+    values: CreateSampleWithValuesItemDto[],
+  ): string[] {
     const fieldIdCount = new Map<string, number>();
 
     for (const value of values) {
-      fieldIdCount.set(value.fieldId, (fieldIdCount.get(value.fieldId) ?? 0) + 1);
+      fieldIdCount.set(
+        value.fieldId,
+        (fieldIdCount.get(value.fieldId) ?? 0) + 1,
+      );
     }
 
     return [...fieldIdCount.entries()]

@@ -25,12 +25,11 @@ export class UsersService {
 
     const supabase = this.supabaseService.getClient();
 
-    const { data: authData, error } =
-      await supabase.auth.admin.createUser({
-        email: data.email,
-        password: data.password,
-        email_confirm: true,
-      });
+    const { data: authData, error } = await supabase.auth.admin.createUser({
+      email: data.email,
+      password: data.password,
+      email_confirm: true,
+    });
 
     if (error) {
       throw new ConflictException(error.message);
@@ -54,7 +53,7 @@ export class UsersService {
       await this.userRepo.save(user);
 
       return user;
-    } catch (dbError) {
+    } catch {
       await supabase.auth.admin.deleteUser(authData.user.id);
 
       throw new Error('Database error, user rolled back');
@@ -83,15 +82,21 @@ export class UsersService {
     const user = await this.findOne(id);
 
     if (typeof data.password !== 'undefined') {
-      throw new BadRequestException('Password must be updated using PATCH /users/:id/password');
+      throw new BadRequestException(
+        'Password must be updated using PATCH /users/:id/password',
+      );
     }
 
     if (typeof data.role !== 'undefined') {
-      throw new BadRequestException('Role must be updated using PATCH /users/:id/role');
+      throw new BadRequestException(
+        'Role must be updated using PATCH /users/:id/role',
+      );
     }
 
     if (data.email && data.email !== user.email) {
-      const emailInUse = await this.userRepo.findOne({ where: { email: data.email } });
+      const emailInUse = await this.userRepo.findOne({
+        where: { email: data.email },
+      });
       if (emailInUse && emailInUse.id !== user.id) {
         throw new ConflictException('A user with this email already exists');
       }
@@ -135,13 +140,18 @@ export class UsersService {
       const { error } = await supabase.auth.admin.deleteUser(user.id);
 
       if (error) {
-        throw new ConflictException(`Error deleting Supabase user: ${error.message}`);
+        throw new ConflictException(
+          `Error deleting Supabase user: ${error.message}`,
+        );
       }
 
       await this.userRepo.remove(user);
       return { id: user.id, deleted: true };
     } catch (error) {
-      if (error instanceof NotFoundException || error instanceof ConflictException) {
+      if (
+        error instanceof NotFoundException ||
+        error instanceof ConflictException
+      ) {
         throw error;
       }
 
@@ -149,14 +159,19 @@ export class UsersService {
     }
   }
 
-  private async updateAppMetadata(userId: string, newRole: string): Promise<void> {
+  private async updateAppMetadata(
+    userId: string,
+    newRole: string,
+  ): Promise<void> {
     const supabase = this.supabaseService.getClient();
 
     const { data: userData, error: fetchError } =
       await supabase.auth.admin.getUserById(userId);
 
     if (fetchError) {
-      throw new ConflictException(`Error obtaining Supabase user: ${fetchError.message}`);
+      throw new ConflictException(
+        `Error obtaining Supabase user: ${fetchError.message}`,
+      );
     }
 
     if (!userData?.user) {
@@ -174,7 +189,9 @@ export class UsersService {
     });
 
     if (error) {
-      throw new ConflictException(`Error updating Supabase metadata: ${error.message}`);
+      throw new ConflictException(
+        `Error updating Supabase metadata: ${error.message}`,
+      );
     }
   }
 
@@ -190,7 +207,9 @@ export class UsersService {
     });
 
     if (error) {
-      throw new ConflictException(`Error updating password in Supabase: ${error.message}`);
+      throw new ConflictException(
+        `Error updating password in Supabase: ${error.message}`,
+      );
     }
   }
 
@@ -207,7 +226,9 @@ export class UsersService {
     });
 
     if (error) {
-      throw new ConflictException(`Error updating password in Supabase: ${error.message}`);
+      throw new ConflictException(
+        `Error updating password in Supabase: ${error.message}`,
+      );
     }
 
     // Mark passwordChanged as true in database
@@ -219,8 +240,12 @@ export class UsersService {
   }
 
   private validateRole(role: string): void {
-    if (!Object.values(ROLES).includes(role as (typeof ROLES)[keyof typeof ROLES])) {
-      throw new BadRequestException(`Invalid role. Allowed roles: ${Object.values(ROLES).join(', ')}`);
+    if (
+      !Object.values(ROLES).includes(role as (typeof ROLES)[keyof typeof ROLES])
+    ) {
+      throw new BadRequestException(
+        `Invalid role. Allowed roles: ${Object.values(ROLES).join(', ')}`,
+      );
     }
   }
 }

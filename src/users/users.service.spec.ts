@@ -96,7 +96,9 @@ describe('UsersService', () => {
         data: { user: { app_metadata: {} } },
         error: null,
       });
-      supabaseClient.auth.admin.updateUserById.mockResolvedValue({ error: null });
+      supabaseClient.auth.admin.updateUserById.mockResolvedValue({
+        error: null,
+      });
       userRepo.create.mockReturnValue(createdUser);
       userRepo.save.mockResolvedValue(createdUser);
 
@@ -144,7 +146,9 @@ describe('UsersService', () => {
         data: { user: { app_metadata: {} } },
         error: null,
       });
-      supabaseClient.auth.admin.updateUserById.mockResolvedValue({ error: null });
+      supabaseClient.auth.admin.updateUserById.mockResolvedValue({
+        error: null,
+      });
       userRepo.create.mockReturnValue({ id: 'user-1' });
       userRepo.save.mockRejectedValue(new Error('db error'));
       supabaseClient.auth.admin.deleteUser.mockResolvedValue({ error: null });
@@ -152,7 +156,9 @@ describe('UsersService', () => {
       await expect(service.create(validDto)).rejects.toThrow(
         'Database error, user rolled back',
       );
-      expect(supabaseClient.auth.admin.deleteUser).toHaveBeenCalledWith('user-1');
+      expect(supabaseClient.auth.admin.deleteUser).toHaveBeenCalledWith(
+        'user-1',
+      );
     });
   });
 
@@ -177,28 +183,38 @@ describe('UsersService', () => {
 
       const result = await service.findOne('user-1');
 
-      expect(userRepo.findOne).toHaveBeenCalledWith({ where: { id: 'user-1' } });
+      expect(userRepo.findOne).toHaveBeenCalledWith({
+        where: { id: 'user-1' },
+      });
       expect(result).toEqual(user);
     });
 
     it('should throw NotFoundException when user does not exist', async () => {
       userRepo.findOne.mockResolvedValue(null);
 
-      await expect(service.findOne('missing')).rejects.toThrow(NotFoundException);
+      await expect(service.findOne('missing')).rejects.toThrow(
+        NotFoundException,
+      );
     });
   });
 
   describe('update', () => {
     it('should throw BadRequestException when password is included', async () => {
-      jest.spyOn(service, 'findOne').mockResolvedValue({ id: 'user-1' } as User);
+      jest
+        .spyOn(service, 'findOne')
+        .mockResolvedValue({ id: 'user-1' } as User);
 
       await expect(
-        service.update('user-1', { password: 'new-password-123' } as UpdateUserDto),
+        service.update('user-1', {
+          password: 'new-password-123',
+        } as UpdateUserDto),
       ).rejects.toThrow(BadRequestException);
     });
 
     it('should throw BadRequestException when role is included', async () => {
-      jest.spyOn(service, 'findOne').mockResolvedValue({ id: 'user-1' } as User);
+      jest
+        .spyOn(service, 'findOne')
+        .mockResolvedValue({ id: 'user-1' } as User);
 
       await expect(
         service.update('user-1', { role: ROLES.ADMIN } as UpdateUserDto),
@@ -210,7 +226,10 @@ describe('UsersService', () => {
         id: 'user-1',
         email: 'old@fluxlab.io',
       } as User);
-      userRepo.findOne.mockResolvedValue({ id: 'user-2', email: 'taken@fluxlab.io' });
+      userRepo.findOne.mockResolvedValue({
+        id: 'user-2',
+        email: 'taken@fluxlab.io',
+      });
 
       await expect(
         service.update('user-1', { email: 'taken@fluxlab.io' }),
@@ -261,14 +280,19 @@ describe('UsersService', () => {
         data: { user: { app_metadata: { source: 'tests' } } },
         error: null,
       });
-      supabaseClient.auth.admin.updateUserById.mockResolvedValue({ error: null });
+      supabaseClient.auth.admin.updateUserById.mockResolvedValue({
+        error: null,
+      });
       userRepo.save.mockResolvedValue({ ...user, role: ROLES.ADMIN });
 
       const result = await service.updateUserRole('user-1', ROLES.ADMIN);
 
-      expect(supabaseClient.auth.admin.updateUserById).toHaveBeenCalledWith('user-1', {
-        app_metadata: { source: 'tests', role: ROLES.ADMIN },
-      });
+      expect(supabaseClient.auth.admin.updateUserById).toHaveBeenCalledWith(
+        'user-1',
+        {
+          app_metadata: { source: 'tests', role: ROLES.ADMIN },
+        },
+      );
       expect(result).toEqual({ ...user, role: ROLES.ADMIN });
     });
 
@@ -279,19 +303,29 @@ describe('UsersService', () => {
         data: { user: { app_metadata: {} } },
         error: null,
       });
-      supabaseClient.auth.admin.updateUserById.mockResolvedValue({ error: null });
+      supabaseClient.auth.admin.updateUserById.mockResolvedValue({
+        error: null,
+      });
       userRepo.save.mockRejectedValue(new Error('db error'));
 
-      await expect(service.updateUserRole('user-1', ROLES.ADMIN)).rejects.toThrow(
-        ConflictException,
-      );
+      await expect(
+        service.updateUserRole('user-1', ROLES.ADMIN),
+      ).rejects.toThrow(ConflictException);
 
-      expect(supabaseClient.auth.admin.updateUserById).toHaveBeenNthCalledWith(1, 'user-1', {
-        app_metadata: { role: ROLES.ADMIN },
-      });
-      expect(supabaseClient.auth.admin.updateUserById).toHaveBeenNthCalledWith(2, 'user-1', {
-        app_metadata: { role: ROLES.USER },
-      });
+      expect(supabaseClient.auth.admin.updateUserById).toHaveBeenNthCalledWith(
+        1,
+        'user-1',
+        {
+          app_metadata: { role: ROLES.ADMIN },
+        },
+      );
+      expect(supabaseClient.auth.admin.updateUserById).toHaveBeenNthCalledWith(
+        2,
+        'user-1',
+        {
+          app_metadata: { role: ROLES.USER },
+        },
+      );
     });
   });
 
@@ -304,20 +338,27 @@ describe('UsersService', () => {
     });
 
     it('should update password in Supabase', async () => {
-      supabaseClient.auth.admin.updateUserById.mockResolvedValue({ error: null });
+      supabaseClient.auth.admin.updateUserById.mockResolvedValue({
+        error: null,
+      });
 
       await service.updateAuthPassword('user-1', 'new-password-123');
 
-      expect(supabaseClient.auth.admin.updateUserById).toHaveBeenCalledWith('user-1', {
-        password: 'new-password-123',
-      });
+      expect(supabaseClient.auth.admin.updateUserById).toHaveBeenCalledWith(
+        'user-1',
+        {
+          password: 'new-password-123',
+        },
+      );
     });
   });
 
   describe('changePassword', () => {
     it('should update password and mark passwordChanged true', async () => {
       const user = { id: 'user-1', passwordChanged: false } as User;
-      supabaseClient.auth.admin.updateUserById.mockResolvedValue({ error: null });
+      supabaseClient.auth.admin.updateUserById.mockResolvedValue({
+        error: null,
+      });
       jest.spyOn(service, 'findOne').mockResolvedValue(user);
       userRepo.save.mockResolvedValue({ ...user, passwordChanged: true });
 
@@ -340,7 +381,9 @@ describe('UsersService', () => {
 
       const result = await service.remove('user-1');
 
-      expect(supabaseClient.auth.admin.deleteUser).toHaveBeenCalledWith('user-1');
+      expect(supabaseClient.auth.admin.deleteUser).toHaveBeenCalledWith(
+        'user-1',
+      );
       expect(userRepo.remove).toHaveBeenCalledWith(user);
       expect(result).toEqual({ id: 'user-1', deleted: true });
     });

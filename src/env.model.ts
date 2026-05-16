@@ -1,6 +1,16 @@
 export interface Env {
+  NODE_ENV?: string;
+  PORT?: string;
+  HOST?: string;
+  CORS_ORIGIN?: string;
+  CORS_ORIGINS?: string;
+  CORS_CREDENTIALS?: string;
+  SWAGGER_ENABLED?: string;
+  DATABASE_URL?: string;
+  DB_SSL?: string;
+
   SUPABASE_HOST: string;
-  SUPABASE_PORT: number;
+  SUPABASE_PORT: string;
   SUPABASE_DB: string;
   SUPABASE_USER: string;
   SUPABASE_PASSWORD: string;

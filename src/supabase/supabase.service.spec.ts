@@ -53,10 +53,15 @@ describe('SupabaseService', () => {
   });
 
   it('should initialize supabase client with env values from ConfigService', () => {
-    expect(configService.get).toHaveBeenCalledWith('SUPABASE_URL', { infer: true });
-    expect(configService.get).toHaveBeenCalledWith('SUPABASE_SERVICE_ROLE_KEY', {
+    expect(configService.get).toHaveBeenCalledWith('SUPABASE_URL', {
       infer: true,
     });
+    expect(configService.get).toHaveBeenCalledWith(
+      'SUPABASE_SERVICE_ROLE_KEY',
+      {
+        infer: true,
+      },
+    );
     expect(createClient).toHaveBeenCalledWith(
       'https://test-project.supabase.co',
       'service-role-key',

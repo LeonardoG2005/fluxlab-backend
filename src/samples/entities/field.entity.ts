@@ -31,10 +31,16 @@ export class Field {
   @Column({ name: 'order_index', type: 'int' })
   orderIndex: number;
 
-  @ManyToOne(() => Template, (template) => template.fields, { nullable: false, onDelete: 'CASCADE' })
+  @ManyToOne(() => Template, (template) => template.fields, {
+    nullable: false,
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'template_id' })
   template: Template;
 
-  @OneToMany(() => SampleFieldValue, (sampleFieldValue) => sampleFieldValue.field)
+  @OneToMany(
+    () => SampleFieldValue,
+    (sampleFieldValue) => sampleFieldValue.field,
+  )
   sampleFieldValues: SampleFieldValue[];
 }

@@ -18,6 +18,7 @@ const createClientsRepositoryMock = () => ({
   find: jest.fn(),
   merge: jest.fn(),
   remove: jest.fn(),
+  createQueryBuilder: jest.fn(),
 });
 
 const createProjectsRepositoryMock = () => ({
@@ -30,9 +31,22 @@ describe('ClientsService', () => {
   let clientsRepository: ReturnType<typeof createClientsRepositoryMock>;
   let projectsRepository: ReturnType<typeof createProjectsRepositoryMock>;
 
+  const clientNameUniqueQueryBuilderMock = {
+    where: jest.fn().mockReturnThis(),
+    andWhere: jest.fn().mockReturnThis(),
+    getOne: jest.fn(),
+  };
+
   beforeEach(async () => {
     clientsRepository = createClientsRepositoryMock();
     projectsRepository = createProjectsRepositoryMock();
+
+    clientsRepository.createQueryBuilder.mockReturnValue(
+      clientNameUniqueQueryBuilderMock as any,
+    );
+    clientNameUniqueQueryBuilderMock.getOne.mockResolvedValue(null);
+    clientNameUniqueQueryBuilderMock.where.mockClear();
+    clientNameUniqueQueryBuilderMock.andWhere.mockClear();
 
     const module: TestingModule = await Test.createTestingModule({
       providers: [
@@ -301,7 +315,9 @@ describe('ClientsService', () => {
 
       const result = await service.filterByClient(client.id);
 
-      expect(projectsRepository.createQueryBuilder).toHaveBeenCalledWith('project');
+      expect(projectsRepository.createQueryBuilder).toHaveBeenCalledWith(
+        'project',
+      );
       expect(queryBuilderMock.andWhere).not.toHaveBeenCalled();
       expect(result).toEqual({
         client,

@@ -35,10 +35,17 @@ export class Project {
   @Column({ name: 'status', type: 'varchar', length: 50, default: 'active' })
   status: string;
 
-  @Column({ name: 'created_at', type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
+  @Column({
+    name: 'created_at',
+    type: 'timestamptz',
+    default: () => 'CURRENT_TIMESTAMP',
+  })
   createdAt: Date;
 
-  @ManyToOne(() => Client, (client) => client.projects, { nullable: true, onDelete: 'SET NULL' })
+  @ManyToOne(() => Client, (client) => client.projects, {
+    nullable: true,
+    onDelete: 'SET NULL',
+  })
   @JoinColumn({ name: 'client_id' })
   client: Client | null;
 

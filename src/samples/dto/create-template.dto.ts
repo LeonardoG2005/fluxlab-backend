@@ -8,7 +8,10 @@ export class CreateTemplateDto {
   @MaxLength(150)
   name: string;
 
-  @ApiProperty({ example: 'Template for standard water quality testing', required: false })
+  @ApiProperty({
+    example: 'Template for standard water quality testing',
+    required: false,
+  })
   @IsOptional()
   @IsString()
   @MaxLength(255)

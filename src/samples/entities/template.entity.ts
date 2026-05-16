@@ -15,7 +15,11 @@ export class Template {
   @Column({ name: 'description', type: 'varchar', length: 255, nullable: true })
   description: string | null;
 
-  @Column({ name: 'created_at', type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
+  @Column({
+    name: 'created_at',
+    type: 'timestamptz',
+    default: () => 'CURRENT_TIMESTAMP',
+  })
   createdAt: Date;
 
   @OneToMany(() => Sample, (sample) => sample.template)

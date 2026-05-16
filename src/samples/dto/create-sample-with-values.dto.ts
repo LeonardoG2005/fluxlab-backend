@@ -2,7 +2,6 @@ import { ApiProperty, ApiPropertyOptional } from '@nestjs/swagger';
 import {
   IsBoolean,
   IsDateString,
-  IsInt,
   IsNumber,
   IsOptional,
   IsString,
@@ -17,9 +16,7 @@ import { Type } from 'class-transformer';
 import { CreateSampleDto } from './create-sample.dto';
 
 @ValidatorConstraint({ name: 'exactlyOneSampleValueField', async: false })
-class ExactlyOneSampleValueFieldConstraint
-  implements ValidatorConstraintInterface
-{
+class ExactlyOneSampleValueFieldConstraint implements ValidatorConstraintInterface {
   validate(_: unknown, args?: ValidationArguments): boolean {
     if (!args?.object) {
       return false;

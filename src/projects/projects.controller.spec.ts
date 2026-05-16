@@ -71,7 +71,10 @@ describe('ProjectsController', () => {
         clientId: 'client-1',
         projectIds: ['project-1', 'project-2'],
       };
-      const expected = { message: 'Client associated to projects successfully', data: [] };
+      const expected = {
+        message: 'Client associated to projects successfully',
+        data: [],
+      };
       service.associateClientToProjects.mockResolvedValue(expected);
 
       const result = await controller.associateClientToProjects(dto);
@@ -91,16 +94,25 @@ describe('ProjectsController', () => {
 
       const result = await controller.searchByName('QC', 'client-1');
 
-      expect(service.searchProjectsByName).toHaveBeenCalledWith('QC', 'client-1');
+      expect(service.searchProjectsByName).toHaveBeenCalledWith(
+        'QC',
+        'client-1',
+      );
       expect(result).toEqual(expected);
     });
 
     it('should pass undefined clientId when omitted', async () => {
-      service.searchProjectsByName.mockResolvedValue({ message: 'Projects found', data: [] });
+      service.searchProjectsByName.mockResolvedValue({
+        message: 'Projects found',
+        data: [],
+      });
 
       await controller.searchByName('QC');
 
-      expect(service.searchProjectsByName).toHaveBeenCalledWith('QC', undefined);
+      expect(service.searchProjectsByName).toHaveBeenCalledWith(
+        'QC',
+        undefined,
+      );
     });
   });
 
@@ -111,7 +123,10 @@ describe('ProjectsController', () => {
 
       const result = await controller.filterByStatus('active', 'client-1');
 
-      expect(service.filterProjectsByStatus).toHaveBeenCalledWith('active', 'client-1');
+      expect(service.filterProjectsByStatus).toHaveBeenCalledWith(
+        'active',
+        'client-1',
+      );
       expect(result).toEqual(expected);
     });
   });
@@ -178,7 +193,10 @@ describe('ProjectsController', () => {
 
   describe('updateStatus', () => {
     it('should call service.updateProjectStatus with id, status and optional clientId', async () => {
-      const dto: UpdateProjectStatusDto = { status: 'completed', clientId: 'client-1' };
+      const dto: UpdateProjectStatusDto = {
+        status: 'completed',
+        clientId: 'client-1',
+      };
       const expected = { id: 'project-1', status: 'completed' };
       service.updateProjectStatus.mockResolvedValue(expected);
 

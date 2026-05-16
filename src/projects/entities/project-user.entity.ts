@@ -17,14 +17,24 @@ export class ProjectUser {
   @PrimaryGeneratedColumn('uuid', { name: 'id' })
   id: string;
 
-  @Column({ name: 'assigned_at', type: 'timestamptz', default: () => 'CURRENT_TIMESTAMP' })
+  @Column({
+    name: 'assigned_at',
+    type: 'timestamptz',
+    default: () => 'CURRENT_TIMESTAMP',
+  })
   assignedAt: Date;
 
-  @ManyToOne(() => Project, (project) => project.projectUsers, { nullable: false, onDelete: 'CASCADE' })
+  @ManyToOne(() => Project, (project) => project.projectUsers, {
+    nullable: false,
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'project_id' })
   project: Project;
 
-  @ManyToOne(() => User, (user) => user.projectUsers, { nullable: false, onDelete: 'CASCADE' })
+  @ManyToOne(() => User, (user) => user.projectUsers, {
+    nullable: false,
+    onDelete: 'CASCADE',
+  })
   @JoinColumn({ name: 'user_id' })
   user: User;
 }

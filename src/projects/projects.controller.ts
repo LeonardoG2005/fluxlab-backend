@@ -26,16 +26,25 @@ export class ProjectsController {
 
   @Post('associate-client')
   associateClientToProjects(@Body() dto: AssociateClientProjectsDto) {
-    return this.projectsService.associateClientToProjects(dto.clientId, dto.projectIds);
+    return this.projectsService.associateClientToProjects(
+      dto.clientId,
+      dto.projectIds,
+    );
   }
 
   @Get('search')
-  searchByName(@Query('name') name: string, @Query('clientId') clientId?: string) {
+  searchByName(
+    @Query('name') name: string,
+    @Query('clientId') clientId?: string,
+  ) {
     return this.projectsService.searchProjectsByName(name, clientId);
   }
 
   @Get('status')
-  filterByStatus(@Query('value') status: string, @Query('clientId') clientId?: string) {
+  filterByStatus(
+    @Query('value') status: string,
+    @Query('clientId') clientId?: string,
+  ) {
     return this.projectsService.filterProjectsByStatus(status, clientId);
   }
 
@@ -87,7 +96,11 @@ export class ProjectsController {
 
   @Patch(':id/status')
   updateStatus(@Param('id') id: string, @Body() dto: UpdateProjectStatusDto) {
-    return this.projectsService.updateProjectStatus(id, dto.status, dto.clientId);
+    return this.projectsService.updateProjectStatus(
+      id,
+      dto.status,
+      dto.clientId,
+    );
   }
 
   @Delete(':id')
