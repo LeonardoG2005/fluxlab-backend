@@ -16,10 +16,13 @@ import { DashboardModule } from './dashboard/dashboard.module';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+
     TypeOrmModule.forRootAsync({
       useFactory: (configService: ConfigService<Env>) => {
         const nodeEnv = (process.env.NODE_ENV ?? 'development').toLowerCase();
+
         const sslRaw = (process.env.DB_SSL ?? '').toLowerCase();
+
         const sslEnabled = sslRaw
           ? sslRaw === 'true'
           : nodeEnv === 'production';
@@ -34,6 +37,7 @@ import { DashboardModule } from './dashboard/dashboard.module';
         };
 
         const databaseUrl = process.env.DATABASE_URL?.trim();
+
         if (databaseUrl) {
           return {
             ...common,
@@ -46,6 +50,7 @@ import { DashboardModule } from './dashboard/dashboard.module';
         )
           .toString()
           .trim();
+
         const parsedPort = Number.parseInt(rawPort || '5432', 10);
 
         return {
@@ -54,33 +59,37 @@ import { DashboardModule } from './dashboard/dashboard.module';
             (
               configService.get('SUPABASE_HOST', { infer: true }) ?? ''
             ).trim() || undefined,
+
           port: Number.isFinite(parsedPort) ? parsedPort : 5432,
+
           username:
             (
               configService.get('SUPABASE_USER', { infer: true }) ?? ''
             ).trim() || undefined,
+
           password:
             configService.get('SUPABASE_PASSWORD', { infer: true }) ||
             undefined,
+
           database:
             (configService.get('SUPABASE_DB', { infer: true }) ?? '').trim() ||
             undefined,
         };
       },
+
       inject: [ConfigService],
     }),
+
     AuthModule,
     UsersModule,
     ClientsModule,
     ProjectsModule,
     SamplesModule,
-<<<<<<< HEAD
     SupabaseModule,
-=======
-    SupabaseModule,    
     DashboardModule,
->>>>>>> main
   ],
+
   controllers: [AppController],
 })
+
 export class AppModule {}
