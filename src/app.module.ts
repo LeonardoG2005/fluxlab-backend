@@ -30,23 +30,22 @@ import { DashboardModule } from './dashboard/dashboard.module';
         const common = {
           type: 'postgres' as const,
           autoLoadEntities: true,
-          ssl: sslEnabled ? { rejectUnauthorized: false } : undefined,
+          ssl: sslEnabled
+            ? {
+                rejectUnauthorized: false,
+              }
+            : false,
+          extra: sslEnabled
+            ? {
+                ssl: {
+                  rejectUnauthorized: false,
+                },
+              }
+            : {},
           retryAttempts: 5,
           retryDelay: 2000,
-          // synchronize: true,
         };
 
-        const databaseUrl = process.env.DATABASE_URL?.trim();
-
-        if (databaseUrl) {
-          return {
-            ...common,
-            url: databaseUrl,
-            ssl: {
-              rejectUnauthorized: false,
-            },
-          };
-        }
 
         const rawPort = (
           configService.get('SUPABASE_PORT', { infer: true }) ?? ''
@@ -62,18 +61,14 @@ import { DashboardModule } from './dashboard/dashboard.module';
             (
               configService.get('SUPABASE_HOST', { infer: true }) ?? ''
             ).trim() || undefined,
-
           port: Number.isFinite(parsedPort) ? parsedPort : 5432,
-
           username:
             (
               configService.get('SUPABASE_USER', { infer: true }) ?? ''
             ).trim() || undefined,
-
           password:
             configService.get('SUPABASE_PASSWORD', { infer: true }) ||
             undefined,
-
           database:
             (configService.get('SUPABASE_DB', { infer: true }) ?? '').trim() ||
             undefined,
