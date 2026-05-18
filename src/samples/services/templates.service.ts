@@ -12,9 +12,13 @@ import {
   CreateTemplateWithFieldsDto,
   CreateTemplateWithFieldsItemDto,
 } from '../dto/create-template-with-fields.dto';
-import { UpdateTemplateWithFieldsDto } from '../dto/update-template-with-fields.dto';
+import {
+  UpdateTemplateWithFieldsDto,
+  UpdateTemplateWithFieldsItemDto,
+} from '../dto/update-template-with-fields.dto';
 import { Field } from '../entities/field.entity';
 import { Sample } from '../entities/sample.entity';
+import { SampleFieldValue } from '../entities/sample-field-value.entity';
 import { Template } from '../entities/template.entity';
 
 @Injectable()
@@ -48,7 +52,7 @@ export class TemplatesService {
           templateRepository,
         );
 
-        const normalizedFields = this.validateAndNormalizeFields(
+        const normalizedFields = this.validateAndNormalizeCreateFields(
           createTemplateWithFieldsDto.fields,
         );
 
@@ -90,7 +94,7 @@ export class TemplatesService {
 
   async searchByName(name: string): Promise<Template[]> {
     if (!name?.trim()) {
-      throw new BadRequestException('Name query is required.');
+      throw new BadRequestException('Se requiere el nombre de búsqueda.');
     }
 
     const normalizedName = name.trim();
@@ -116,7 +120,7 @@ export class TemplatesService {
       .getOne();
 
     if (!template) {
-      throw new NotFoundException(`Template with id ${id} was not found.`);
+      throw new NotFoundException(`No se encontró la plantilla con id ${id}.`);
     }
 
     return template;
@@ -126,10 +130,13 @@ export class TemplatesService {
     id: string,
     updateTemplateDto: UpdateTemplateWithFieldsDto,
   ): Promise<Template> {
-    const template = await this.templateRepository.findOne({ where: { id } });
+    const template = await this.templateRepository.findOne({
+      where: { id },
+      relations: { fields: true },
+    });
 
     if (!template) {
-      throw new NotFoundException(`Template with id ${id} was not found.`);
+      throw new NotFoundException(`No se encontró la plantilla con id ${id}.`);
     }
 
     if (updateTemplateDto.name && updateTemplateDto.name !== template.name) {
@@ -141,6 +148,7 @@ export class TemplatesService {
       async (manager) => {
         const templateRepo = manager.getRepository(Template);
         const fieldRepo = manager.getRepository(Field);
+        const sampleFieldValueRepository = manager.getRepository(SampleFieldValue);
 
         // Update basic info
         template.name = updateTemplateDto.name ?? template.name;
@@ -148,27 +156,78 @@ export class TemplatesService {
           updateTemplateDto.description ?? template.description;
         await templateRepo.save(template);
 
-        // If fields are provided, replace them
+        // If fields are provided, update non-destructively to preserve existing field IDs.
         if (updateTemplateDto.fields) {
-          // Delete existing fields
-          await fieldRepo.delete({ template: { id: template.id } });
-
-          // Create new fields
-          const normalizedFields = this.validateAndNormalizeFields(
-            updateTemplateDto.fields as any,
+          const normalizedFields = this.validateAndNormalizeUpdateFields(
+            updateTemplateDto.fields,
           );
 
-          const fieldsToSave = normalizedFields.map((field) =>
-            fieldRepo.create({
-              name: field.name,
-              dataType: field.dataType,
-              required: field.required,
-              orderIndex: field.orderIndex,
-              template: template,
-            }),
+          const existingFields = await fieldRepo.find({
+            where: { template: { id: template.id } },
+            order: { orderIndex: 'ASC' },
+          });
+
+          const existingFieldsById = new Map(
+            existingFields.map((existingField) => [existingField.id, existingField]),
+          );
+          const claimedExistingFieldIds = new Set<string>();
+          const fieldsToSave: Field[] = [];
+
+          for (const normalizedField of normalizedFields) {
+            const existingField = this.resolveExistingFieldForUpdate(
+              normalizedField,
+              existingFields,
+              existingFieldsById,
+              claimedExistingFieldIds,
+            );
+
+            if (existingField) {
+              claimedExistingFieldIds.add(existingField.id);
+              existingField.name = normalizedField.name;
+              existingField.dataType = normalizedField.dataType;
+              existingField.required = normalizedField.required;
+              existingField.orderIndex = normalizedField.orderIndex;
+              fieldsToSave.push(existingField);
+              continue;
+            }
+
+            fieldsToSave.push(
+              fieldRepo.create({
+                name: normalizedField.name,
+                dataType: normalizedField.dataType,
+                required: normalizedField.required,
+                orderIndex: normalizedField.orderIndex,
+                template,
+              }),
+            );
+          }
+
+          const fieldsToRemove = existingFields.filter(
+            (existingField) => !claimedExistingFieldIds.has(existingField.id),
           );
 
-          await fieldRepo.save(fieldsToSave);
+          if (fieldsToRemove.length > 0) {
+            const removedFieldIds = fieldsToRemove.map((field) => field.id);
+
+            const associatedSampleValues = await sampleFieldValueRepository
+              .createQueryBuilder('sampleFieldValue')
+              .where('sampleFieldValue.field_id IN (:...fieldIds)', {
+                fieldIds: removedFieldIds,
+              })
+              .getCount();
+
+            if (associatedSampleValues > 0) {
+              throw new ConflictException(
+                'No se puede eliminar uno o mas campos porque ya tienen valores asociados en muestras. Mantenga esos campos o migre la informacion antes de guardarla.',
+              );
+            }
+
+            await fieldRepo.remove(fieldsToRemove);
+          }
+
+          if (fieldsToSave.length > 0) {
+            await fieldRepo.save(fieldsToSave);
+          }
         }
 
         return template.id;
@@ -182,7 +241,7 @@ export class TemplatesService {
     const template = await this.templateRepository.findOne({ where: { id } });
 
     if (!template) {
-      throw new NotFoundException(`Template with id ${id} was not found.`);
+      throw new NotFoundException(`No se encontró la plantilla con id ${id}.`);
     }
     const sampleRepository =
       this.templateRepository.manager.getRepository(Sample);
@@ -225,16 +284,16 @@ export class TemplatesService {
     });
 
     if (existingTemplate) {
-      throw new ConflictException(`Template name ${name} already exists.`);
+      throw new ConflictException(`El nombre de la plantilla ${name} ya existe.`);
     }
   }
 
-  private validateAndNormalizeFields(
+  private validateAndNormalizeCreateFields(
     fields: CreateTemplateWithFieldsItemDto[],
   ): CreateTemplateWithFieldsItemDto[] {
     if (!fields || fields.length === 0) {
       throw new BadRequestException(
-        'fields must be provided and cannot be empty.',
+        'Se deben proporcionar los campos y no pueden estar vacíos.',
       );
     }
 
@@ -245,14 +304,14 @@ export class TemplatesService {
       const normalizedName = field.name.trim().toLowerCase();
       if (normalizedNameMap.has(normalizedName)) {
         throw new BadRequestException(
-          `Duplicate field name detected: ${field.name}.`,
+          `Se detectó un nombre de campo duplicado: ${field.name}.`,
         );
       }
       normalizedNameMap.set(normalizedName, index);
 
       if (orderIndexMap.has(field.orderIndex)) {
         throw new BadRequestException(
-          `Duplicate orderIndex detected: ${field.orderIndex}.`,
+          `Se detectó un orderIndex duplicado: ${field.orderIndex}.`,
         );
       }
       orderIndexMap.set(field.orderIndex, index);
@@ -264,7 +323,7 @@ export class TemplatesService {
         )
       ) {
         throw new BadRequestException(
-          `Unsupported dataType ${field.dataType}. Allowed values are: ${FIELD_DATA_TYPES.join(', ')}.`,
+          `Tipo de dato no soportado ${field.dataType}. Los valores permitidos son: ${FIELD_DATA_TYPES.join(', ')}.`,
         );
       }
     });
@@ -277,5 +336,94 @@ export class TemplatesService {
         dataType: field.dataType.trim().toLowerCase(),
         orderIndex: index,
       }));
+  }
+
+  private validateAndNormalizeUpdateFields(
+    fields: UpdateTemplateWithFieldsItemDto[],
+  ): UpdateTemplateWithFieldsItemDto[] {
+    if (!fields || fields.length === 0) {
+      throw new BadRequestException('Se deben proporcionar los campos y no pueden estar vacíos.');
+    }
+
+    const normalizedNameMap = new Map<string, number>();
+    const orderIndexMap = new Map<number, number>();
+    const fieldIdMap = new Map<string, number>();
+
+    fields.forEach((field, index) => {
+      const normalizedName = field.name.trim().toLowerCase();
+      if (normalizedNameMap.has(normalizedName)) {
+        throw new BadRequestException(
+          `Se detectó un nombre de campo duplicado: ${field.name}.`,
+        );
+      }
+      normalizedNameMap.set(normalizedName, index);
+
+      if (orderIndexMap.has(field.orderIndex)) {
+        throw new BadRequestException(
+          `Se detectó un orderIndex duplicado: ${field.orderIndex}.`,
+        );
+      }
+      orderIndexMap.set(field.orderIndex, index);
+
+      if (field.id) {
+        const normalizedFieldId = field.id.trim();
+        if (fieldIdMap.has(normalizedFieldId)) {
+          throw new BadRequestException(
+            `Se detectó un id de campo duplicado: ${field.id}.`,
+          );
+        }
+        fieldIdMap.set(normalizedFieldId, index);
+      }
+
+      const normalizedDataType = field.dataType.trim().toLowerCase();
+      if (!FIELD_DATA_TYPES.includes(normalizedDataType as (typeof FIELD_DATA_TYPES)[number])) {
+        throw new BadRequestException(
+          `Tipo de dato no soportado ${field.dataType}. Los valores permitidos son: ${FIELD_DATA_TYPES.join(', ')}.`,
+        );
+      }
+    });
+
+    return [...fields]
+      .sort((a, b) => a.orderIndex - b.orderIndex)
+      .map((field, index) => ({
+        ...field,
+        id: field.id?.trim() || undefined,
+        name: field.name.trim(),
+        dataType: field.dataType.trim().toLowerCase(),
+        orderIndex: index,
+      }));
+  }
+
+  private resolveExistingFieldForUpdate(
+    field: UpdateTemplateWithFieldsItemDto,
+    existingFields: Field[],
+    existingFieldsById: Map<string, Field>,
+    claimedExistingFieldIds: Set<string>,
+  ): Field | null {
+    if (field.id) {
+      const existingField = existingFieldsById.get(field.id);
+
+      if (!existingField) {
+        throw new BadRequestException(
+          `El campo ${field.id} no pertenece a la plantilla seleccionada.`,
+        );
+      }
+
+      if (claimedExistingFieldIds.has(existingField.id)) {
+        throw new BadRequestException(`El campo ${field.id} está duplicado en la solicitud.`);
+      }
+
+      return existingField;
+    }
+
+    const normalizedIncomingName = field.name.trim().toLowerCase();
+
+    const matchingFieldByName = existingFields.find(
+      (existingField) =>
+        !claimedExistingFieldIds.has(existingField.id) &&
+        existingField.name.trim().toLowerCase() === normalizedIncomingName,
+    );
+
+    return matchingFieldByName ?? null;
   }
 }

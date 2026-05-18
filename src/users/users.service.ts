@@ -72,7 +72,7 @@ export class UsersService {
     });
 
     if (!user) {
-      throw new NotFoundException('User not found');
+      throw new NotFoundException('Usuario no encontrado');
     }
 
     return user;
@@ -83,13 +83,13 @@ export class UsersService {
 
     if (typeof data.password !== 'undefined') {
       throw new BadRequestException(
-        'Password must be updated using PATCH /users/:id/password',
+        'La contraseña debe actualizarse usando PATCH /users/:id/password',
       );
     }
 
     if (typeof data.role !== 'undefined') {
       throw new BadRequestException(
-        'Role must be updated using PATCH /users/:id/role',
+        'El rol debe actualizarse usando PATCH /users/:id/role',
       );
     }
 
@@ -98,7 +98,7 @@ export class UsersService {
         where: { email: data.email },
       });
       if (emailInUse && emailInUse.id !== user.id) {
-        throw new ConflictException('A user with this email already exists');
+        throw new ConflictException('Ya existe un usuario con este correo electrónico');
       }
     }
 
@@ -128,7 +128,7 @@ export class UsersService {
       return await this.userRepo.save(user);
     } catch {
       await this.updateAppMetadata(user.id, previousRole);
-      throw new ConflictException('Failed to update role in database');
+      throw new ConflictException('No se pudo actualizar el rol en la base de datos');
     }
   }
 
@@ -141,7 +141,7 @@ export class UsersService {
 
       if (error) {
         throw new ConflictException(
-          `Error deleting Supabase user: ${error.message}`,
+          `Error al eliminar usuario de Supabase: ${error.message}`,
         );
       }
 
@@ -155,7 +155,7 @@ export class UsersService {
         throw error;
       }
 
-      throw new ConflictException('Error deleting user');
+      throw new ConflictException('Error al eliminar usuario');
     }
   }
 
@@ -170,12 +170,12 @@ export class UsersService {
 
     if (fetchError) {
       throw new ConflictException(
-        `Error obtaining Supabase user: ${fetchError.message}`,
+        `Error al obtener usuario de Supabase: ${fetchError.message}`,
       );
     }
 
     if (!userData?.user) {
-      throw new NotFoundException('Supabase user not found');
+      throw new NotFoundException('Usuario de Supabase no encontrado');
     }
 
     const currentMetadata = userData.user.app_metadata || {};
@@ -190,15 +190,26 @@ export class UsersService {
 
     if (error) {
       throw new ConflictException(
-        `Error updating Supabase metadata: ${error.message}`,
+        `Error al actualizar metadatos de Supabase: ${error.message}`,
       );
     }
   }
 
-  async updateAuthPassword(userId: string, newPassword: string): Promise<void> {
-    if (!newPassword || newPassword.length < 8) {
-      throw new BadRequestException('Password must have at least 8 characters');
+  async updateAuthPassword(
+    userId: string,
+    currentPassword: string,
+    newPassword: string,
+  ): Promise<User> {
+    if (!currentPassword || !currentPassword.trim()) {
+      throw new BadRequestException('Se requiere la contraseña actual');
     }
+
+    if (!newPassword || newPassword.length < 8) {
+      throw new BadRequestException('La contraseña debe tener al menos 8 caracteres');
+    }
+
+    const user = await this.findOne(userId);
+    await this.verifyCurrentPassword(user.email, currentPassword);
 
     const supabase = this.supabaseService.getClient();
 
@@ -208,14 +219,20 @@ export class UsersService {
 
     if (error) {
       throw new ConflictException(
-        `Error updating password in Supabase: ${error.message}`,
+        `Error al actualizar la contraseña en Supabase: ${error.message}`,
       );
     }
+
+    if (!user.passwordChanged) {
+      user.passwordChanged = true;
+    }
+
+    return this.userRepo.save(user);
   }
 
   async changePassword(userId: string, newPassword: string): Promise<any> {
     if (!newPassword || newPassword.length < 8) {
-      throw new BadRequestException('Password must have at least 8 characters');
+      throw new BadRequestException('La contraseña debe tener al menos 8 caracteres');
     }
 
     const supabase = this.supabaseService.getClient();
@@ -227,7 +244,7 @@ export class UsersService {
 
     if (error) {
       throw new ConflictException(
-        `Error updating password in Supabase: ${error.message}`,
+        `Error al actualizar la contraseña en Supabase: ${error.message}`,
       );
     }
 
@@ -244,8 +261,24 @@ export class UsersService {
       !Object.values(ROLES).includes(role as (typeof ROLES)[keyof typeof ROLES])
     ) {
       throw new BadRequestException(
-        `Invalid role. Allowed roles: ${Object.values(ROLES).join(', ')}`,
+        `Rol inválido. Roles permitidos: ${Object.values(ROLES).join(', ')}`,
       );
+    }
+  }
+
+  private async verifyCurrentPassword(
+    email: string,
+    password: string,
+  ): Promise<void> {
+    const supabase = this.supabaseService.getClient();
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      throw new BadRequestException('La contraseña actual es incorrecta');
     }
   }
 }

@@ -9,6 +9,7 @@ import { ProjectsModule } from './projects/projects.module';
 import { SamplesModule } from './samples/samples.module';
 import { AppController } from './app.controller';
 import { SupabaseModule } from './supabase/supabase.module';
+import { DashboardModule } from './dashboard/dashboard.module';
 
 @Module({
   imports: [
@@ -73,7 +74,12 @@ import { SupabaseModule } from './supabase/supabase.module';
     ClientsModule,
     ProjectsModule,
     SamplesModule,
+<<<<<<< HEAD
     SupabaseModule,
+=======
+    SupabaseModule,    
+    DashboardModule,
+>>>>>>> main
   ],
   controllers: [AppController],
 })

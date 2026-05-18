@@ -183,7 +183,7 @@ export class ProjectsService {
 
   async updateProjectStatus(id: string, status: string, clientId?: string) {
     if (!status?.trim()) {
-      throw new BadRequestException('Project status is required');
+      throw new BadRequestException('Se requiere el estado del proyecto');
     }
 
     const project = await this.findProjectByIdOrFail(id);
@@ -215,7 +215,7 @@ export class ProjectsService {
 
   async searchProjectsByName(name: string, clientId?: string) {
     if (!name || !name.trim()) {
-      throw new BadRequestException('Name query is required');
+      throw new BadRequestException('Se requiere el nombre de búsqueda');
     }
 
     const normalizedName = name.trim();
@@ -253,7 +253,7 @@ export class ProjectsService {
 
   async filterProjectsByStatus(status: string, clientId?: string) {
     if (!status?.trim()) {
-      throw new BadRequestException('Status filter is required');
+      throw new BadRequestException('Se requiere el filtro de estado');
     }
 
     if (clientId) {
@@ -291,7 +291,7 @@ export class ProjectsService {
   ) {
     if (!fromDate && !toDate) {
       throw new BadRequestException(
-        'At least one of fromDate or toDate must be provided',
+        'Se debe proporcionar al menos una de las fechas fromDate o toDate',
       );
     }
 
@@ -316,7 +316,7 @@ export class ProjectsService {
     });
 
     if (!project) {
-      throw new NotFoundException('Project not found');
+      throw new NotFoundException('Proyecto no encontrado');
     }
 
     this.validateProjectScope(project, clientId);
@@ -337,12 +337,12 @@ export class ProjectsService {
 
   async associateClientToProjects(clientId: string, projectIds: string[]) {
     if (!projectIds?.length) {
-      throw new BadRequestException('At least one project ID is required');
+      throw new BadRequestException('Se requiere al menos un ID de proyecto');
     }
 
     const uniqueProjectIds = [...new Set(projectIds)];
     if (uniqueProjectIds.length !== projectIds.length) {
-      throw new BadRequestException('Duplicate project IDs were provided');
+      throw new BadRequestException('Se proporcionaron IDs de proyecto duplicados');
     }
 
     const client = await this.findClientByIdOrFail(clientId);
@@ -353,7 +353,7 @@ export class ProjectsService {
     });
 
     if (projects.length !== uniqueProjectIds.length) {
-      throw new NotFoundException('One or more projects were not found');
+      throw new NotFoundException('No se encontraron uno o más proyectos');
     }
 
     const alreadyAssociated = projects.filter(
@@ -361,7 +361,7 @@ export class ProjectsService {
     );
     if (alreadyAssociated.length === projects.length) {
       throw new ConflictException(
-        'All projects are already associated with the selected client',
+        'Todos los proyectos ya están asociados al cliente seleccionado',
       );
     }
 
@@ -400,7 +400,7 @@ export class ProjectsService {
     });
 
     if (!project) {
-      throw new NotFoundException('Project not found');
+      throw new NotFoundException('Proyecto no encontrado');
     }
 
     return project;
@@ -412,7 +412,7 @@ export class ProjectsService {
     });
 
     if (!client) {
-      throw new NotFoundException('Client not found');
+      throw new NotFoundException('Cliente no encontrado');
     }
 
     return client;
@@ -424,7 +424,7 @@ export class ProjectsService {
     }
 
     if (!project.client || project.client.id !== clientId) {
-      throw new NotFoundException('Project not found for the selected client');
+      throw new NotFoundException('Proyecto no encontrado para el cliente seleccionado');
     }
   }
 
@@ -442,7 +442,7 @@ export class ProjectsService {
       (parsedFromDate && Number.isNaN(parsedFromDate.getTime())) ||
       (parsedToDate && Number.isNaN(parsedToDate.getTime()))
     ) {
-      throw new BadRequestException('fromDate and toDate must be valid dates');
+      throw new BadRequestException('fromDate y toDate deben ser fechas válidas');
     }
 
     if (
@@ -450,7 +450,7 @@ export class ProjectsService {
       parsedToDate &&
       parsedFromDate.getTime() > parsedToDate.getTime()
     ) {
-      throw new BadRequestException('fromDate cannot be greater than toDate');
+      throw new BadRequestException('fromDate no puede ser mayor que toDate');
     }
 
     return {
@@ -486,7 +486,7 @@ export class ProjectsService {
     const duplicate = await query.getOne();
     if (duplicate) {
       throw new ConflictException(
-        'A project with this name already exists for the selected client',
+        'Ya existe un proyecto con este nombre para el cliente seleccionado',
       );
     }
   }
