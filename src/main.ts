@@ -73,10 +73,14 @@ async function bootstrap() {
     });
   }
 
-  const portRaw = process.env.PORT ?? '3000';
+  const portRaw = (process.env.PORT ?? '3000').replace(/"/g, '').trim();
   const port = Number.parseInt(portRaw, 10);
   const listenPort = Number.isFinite(port) ? port : 3000;
   const host = process.env.HOST ?? '0.0.0.0';
+
+  console.log(
+    `[bootstrap] PORT=${process.env.PORT ?? '(empty)'} HOST=${process.env.HOST ?? '(empty)'} -> listen ${host}:${listenPort}`,
+  );
 
   await app.listen(listenPort, host);
   logger.log(`API escuchando en http://${host}:${listenPort}/api`);
