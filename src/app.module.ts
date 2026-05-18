@@ -42,6 +42,9 @@ import { DashboardModule } from './dashboard/dashboard.module';
           return {
             ...common,
             url: databaseUrl,
+            ssl: {
+              rejectUnauthorized: false,
+            },
           };
         }
 
